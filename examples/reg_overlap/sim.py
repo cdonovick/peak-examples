@@ -115,7 +115,7 @@ def CPU_mappable_fc(family):
                      rs2_w: isa.Word,
                      rs1_dw: isa.DWord,
                      rs2_dw: isa.DWord,
-                     ) -> (isa.DWord, isa.DWord):
+                     ) -> (isa.DWord, isa.Word, isa.DWord):
 
             if inst[isa.Inst16].match:
                 rs1 = rs1_w.zext(DWord.size - Word.size)
