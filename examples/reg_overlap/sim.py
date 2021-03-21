@@ -107,7 +107,7 @@ def CPU_mappable_fc(family):
         def __init__(self):
             self.cpu = CPU()
 
-        @name_outputs(pc_next=isa.Word, rd=isa.Word)
+        @name_outputs(pc_next=isa.Word, rd_w=isa.Word, rd_dw=isa.DWord)
         def __call__(self,
                      inst: Const(isa.Inst),
                      pc: isa.DWord,
@@ -127,7 +127,8 @@ def CPU_mappable_fc(family):
             self._set_rs1_(rs1)
             self._set_rs2_(rs2)
             pc_next = self.riscv(inst, pc)
-            return pc_next, self.cpu.register_file.rd
+            rd = self.cpu.register_file.rd
+            return pc_next, rd[:Word.size], rd
 
         def _set_rs1_(self, rs1):
             self.cpu.register_file._set_rs1_(rs1)
