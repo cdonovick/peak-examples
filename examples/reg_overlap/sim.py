@@ -1,10 +1,7 @@
-
 from peak import Peak, name_outputs, family_closure, Const
 from .isa import ISA_fc
 from . import family
 from hwtypes import modifiers
-
-Initial = modifiers.make_modifier('Initial', cache=True)
 
 
 @family_closure(family)

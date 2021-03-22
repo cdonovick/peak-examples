@@ -1,4 +1,3 @@
-
 from types import SimpleNamespace
 
 from hwtypes.adt import Enum, Product, Sum, TaggedUnion
