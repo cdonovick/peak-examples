@@ -1,5 +1,5 @@
-from .sim import CPU_fc, CPU_mappable_fc
-from .isa import ISA_fc
+from examples.reg_overlap.sim import CPU_fc, CPU_mappable_fc
+from examples.reg_overlap.isa import ISA_fc
 
 def test_py():
     CPU = CPU_fc.Py

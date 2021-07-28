@@ -1,5 +1,5 @@
-from .sim import CPU_fc
-from .isa import ISA_fc
+from examples.fp.sim import CPU_fc
+from examples.fp.isa import ISA_fc
 
 def test_py():
     CPU = CPU_fc.Py
