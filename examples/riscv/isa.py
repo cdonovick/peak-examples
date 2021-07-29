@@ -156,4 +156,18 @@ def ISA_fc(family):
     # This sum type defines the opcode field
     Inst = Sum[OP, OP_IMM, LUI, AUIPC, JAL, JALR, Branch, Load, Store]
 
+    class _DecodeOut(Product):
+        rs1 = Idx
+        rs2 = Idx
+        rd = Idx
+        imm = Word
+        use_imm = Bit
+        use_pc = Bit
+        exec_inst= AluInst
+        mask_lsb = Bit
+        is_branch = Bit
+        is_jump = Bit
+        cmp_zero = Bit
+        invert = Bit
+
     return SimpleNamespace(**locals())

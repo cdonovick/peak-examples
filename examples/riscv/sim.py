@@ -17,39 +17,34 @@ def R32I_fc(family):
 
     isa = ISA_fc.Py
     RegisterFile = family.get_register_file()
-
     ExecInst = family.get_constructor(isa.AluInst)
+    DecodeOut = family.get_constructor(isa._DecodeOut)
 
     @family.assemble(locals(), globals())
-    class R32I(Peak):
-        def __init__(self):
-            self.register_file = RegisterFile()
-
-        @name_outputs(pc_next=isa.Word)
+    class Decode(Peak):
         def __call__(self,
-                     inst: isa.Inst,
-                     pc: isa.Word) -> isa.Word:
-            # Decode
-            # Inputs:
-            #   inst, pc
-            # Outputs:
-            #   a, b, exec_inst, rd
-            #   lsb_mask, is_branch, is_jump
-            #   branch_offset, cmp_zero, invert,
-            lsb_mask = Word(-1)
+                inst: isa.Inst,
+                pc: isa.Word,
+                ) -> isa._DecodeOut:
+
+            use_imm = Bit(0)
+            use_pc = Bit(0)
+            mask_lsb = Bit(0)
             is_branch = Bit(0)
             is_jump = Bit(0)
-            branch_offset = Word(0)
             cmp_zero = Bit(0)
             invert = Bit(0)
 
             # Note rd != 0 is implicit enable
             rd = Idx(0)
+            rs1 = Idx(0)
+            rs2 = Idx(0)
+            imm = Word(0)
 
             if inst[isa.OP].match:
                 op_inst = inst[isa.OP].value
-                a = self.register_file.load1(op_inst.data.rs1)
-                b = self.register_file.load2(op_inst.data.rs2)
+                rs1 = op_inst.data.rs1
+                rs2 = op_inst.data.rs2
                 exec_inst = op_inst.tag
                 rd = op_inst.data.rd
 
@@ -63,56 +58,57 @@ def R32I_fc(family):
                     # radically increase its complexity.
                     assert op_imm_arith_inst.tag != isa.ArithInst.SUB
 
-                    a = self.register_file.load1(op_imm_arith_inst.data.rs1)
-                    b = op_imm_arith_inst.data.imm.sext(20)
+                    rs1 = op_imm_arith_inst.data.rs1
+                    imm = op_imm_arith_inst.data.imm.sext(20)
+                    use_imm = Bit(1)
                     exec_inst = ExecInst(arith=op_imm_arith_inst.tag)
                     rd = op_imm_arith_inst.data.rd
 
                 else:
                     assert op_imm_inst.shift.match
                     op_imm_shift_inst = op_imm_inst.shift.value
-                    a = self.register_file.load1(op_imm_shift_inst.data.rs1)
-                    b = op_imm_shift_inst.data.imm.zext(27)
+                    rs1 = op_imm_shift_inst.data.rs1
+                    imm = op_imm_shift_inst.data.imm.zext(27)
+                    use_imm = Bit(1)
                     exec_inst = ExecInst(shift=op_imm_shift_inst.tag)
                     rd = op_imm_shift_inst.data.rd
 
             elif inst[isa.LUI].match:
                 lui_inst = inst[isa.LUI].value.data
-                a = Word(0)
-                b = lui_inst.imm.sext(12) << 12
+                imm = lui_inst.imm.sext(12) << 12
                 rd = lui_inst.rd
                 exec_inst = ExecInst(arith=isa.ArithInst.ADD)
 
             elif inst[isa.AUIPC].match:
                 auipc_inst = inst[isa.AUIPC].value.data
-                a = pc
-                b = auipc_inst.imm.sext(12) << 12
+                use_pc = Bit(1)
+                imm = auipc_inst.imm.sext(12) << 12
                 rd = auipc_inst.rd
                 exec_inst = ExecInst(arith=isa.ArithInst.ADD)
 
             elif inst[isa.JAL].match:
                 is_jump = Bit(1)
                 jal_inst = inst[isa.JAL].value.data
-                a = pc
-                b = jal_inst.imm.sext(12) << 1
+                use_pc = Bit(1)
+                imm = jal_inst.imm.sext(12) << 1
                 rd = jal_inst.rd
                 exec_inst = ExecInst(arith=isa.ArithInst.ADD)
 
             elif inst[isa.JALR].match:
                 is_jump = Bit(1)
-                lsb_mask = ~Word(1)
+                mask_lsb = Bit(1)
                 jalr_inst = inst[isa.JALR].value.data
-                a = self.register_file.load1(jalr_inst.rs1)
-                b = jalr_inst.imm.sext(20)
+                rs1 = jalr_inst.rs1
+                imm = jalr_inst.imm.sext(20)
                 rd = jalr_inst.rd
                 exec_inst = ExecInst(arith=isa.ArithInst.ADD)
 
             elif inst[isa.Branch].match:
                 is_branch = Bit(1)
                 branch_inst = inst[isa.Branch].value
-                a = self.register_file.load1(branch_inst.data.rs1)
-                b = self.register_file.load2(branch_inst.data.rs2)
-                branch_offset = branch_inst.data.imm.sext(20) << 1
+                rs1 = branch_inst.data.rs1
+                rs2 = branch_inst.data.rs2
+                imm = branch_inst.data.imm.sext(20) << 1
 
                 # hand coded common sub-expr elimin
                 is_eq = branch_inst.tag == isa.BranchInst.BEQ
@@ -138,21 +134,33 @@ def R32I_fc(family):
                     invert = cmp_ge
 
             elif inst[isa.Load].match:
-                a = Word(0)
-                b = Word(0)
                 exec_inst = ExecInst(arith=isa.ArithInst.ADD)
             else:
                 assert inst[isa.Store].match
-                a = Word(0)
-                b = Word(0)
                 exec_inst = ExecInst(arith=isa.ArithInst.ADD)
+            return DecodeOut(
+                rs1 = rs1,
+                rs2 = rs2,
+                rd = rd,
+                imm = imm,
+                use_imm = use_imm,
+                use_pc = use_pc,
+                exec_inst = exec_inst,
+                mask_lsb = mask_lsb,
+                is_branch = is_branch,
+                is_jump = is_jump,
+                cmp_zero = cmp_zero,
+                invert = invert,
+            )
 
-            # Execute
-            # Inputs:
-            #   a, b, exec_inst, lsb_mask, branch_offset
-            # Outputs:
-            #  c, branch_target
-            branch_target = pc + branch_offset
+
+    @family.assemble(locals(), globals())
+    class ALU(Peak):
+        def __call__(self,
+                exec_inst: isa.AluInst,
+                a: isa.Word,
+                b: isa.Word,
+            ) -> isa.Word:
             if exec_inst.arith.match:
                 arith_inst = exec_inst.arith.value
                 if arith_inst == isa.ArithInst.ADD:
@@ -180,17 +188,59 @@ def R32I_fc(family):
                 else:
                     assert shift_inst == isa.ShiftInst.SRA
                     c = a.bvashr(b)
+            return c
 
-            c = c & lsb_mask # clear bottom bit for jalr
+
+    @family.assemble(locals(), globals())
+    class R32I(Peak):
+        def __init__(self):
+            self.register_file = RegisterFile()
+            self.Decode = Decode()
+            self.ALU = ALU()
+
+        @name_outputs(pc_next=isa.Word)
+        def __call__(self,
+                     inst: isa.Inst,
+                     pc: isa.Word) -> isa.Word:
+            # Decode
+            decoded = self.Decode(inst, pc)
+
+            # unpack
+            rs1 = decoded.rs1
+            rs2 = decoded.rs2
+            rd = decoded.rd
+            imm = decoded.imm
+            use_imm = decoded.use_imm
+            use_pc = decoded.use_pc
+            exec_inst = decoded.exec_inst
+            mask_lsb = decoded.mask_lsb
+            is_branch = decoded.is_branch
+            is_jump = decoded.is_jump
+            cmp_zero = decoded.cmp_zero
+            invert = decoded.invert
+
+            a = self.register_file.load1(rs1)
+            b = self.register_file.load2(rs2)
+
+            if use_pc:
+                a = pc
+
+            if use_imm:
+                b = imm
+
+
+            # Execute
+            c = self.ALU(exec_inst, a, b)
+
+            if mask_lsb:
+                c = BitVector[1](0).concat(c[1:]) # clear bottom bit for jalr
+
 
             # Commit
-            # Inputs:
-            #   pc, rd, c, is_branch, is_jump
-            #   branch_target, cmp_zero, invert
-            # Outputs:
-            #   pc_next
             assert not (is_jump & is_branch)
-            pc_next = pc+4
+
+            pc_next = pc + 4
+            branch_target = pc + imm
             if is_branch:
                 out = Word(0)
                 if cmp_zero:
