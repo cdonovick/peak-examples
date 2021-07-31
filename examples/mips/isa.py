@@ -17,7 +17,7 @@ def ISA_fc(family):
     Idx = BitVector[sizes.IdxLen]
     Word = BitVector[sizes.WordLen]
     Shift = BitVector[sizes.ShiftLen]
-    Const = BitVector[sizes.ConstLen]
+    Imm = BitVector[sizes.ConstLen]
 
     # LAYOUTS:
     # R : | op 6 | rs 5 | rt 5 | rd 5 | sa 5 | funct 6 |
@@ -147,12 +147,12 @@ def ISA_fc(family):
     class I2(Product):
         rd = Idx
         rs = Idx
-        im = Const
+        im = Imm
         op = I2Inst
 
     class LUI(Product):
         rd = Idx
-        im = Const
+        im = Imm
 
     Inst = Sum[R1, R2, R3, Rs, Rlm, I2, LUI]
 

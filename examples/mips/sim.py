@@ -102,7 +102,7 @@ def MIPS32_fc(family):
                 else:
                     alu_op = ALUOp(micro.ALUOp.Or)
                     # Need to handle CLO, CLZ, SEB, SEH, WSBH
-                alu_ctrl = ALUControl(signed=signed, alu_op=alu_op, inv_lu_out=Bit(0))
+                alu_ctrl = ALUControl(signed=Bit(signed), alu_op=alu_op, inv_lu_out=Bit(0))
             elif inst[isa.R3].match:
                 rd = inst[isa.R3].value.rd
                 rs = inst[isa.R3].value.rs
@@ -129,7 +129,7 @@ def MIPS32_fc(family):
                 else:
                     alu_op = ALUOp(micro.ALUOp.MOV)
                     is_mov = Bit(1)
-                alu_ctrl = ALUControl(signed=signed, alu_op=alu_op, inv_lu_out=inv_lu_out)
+                alu_ctrl = ALUControl(signed=Bit(signed), alu_op=alu_op, inv_lu_out=inv_lu_out)
             elif inst[isa.Rs].match:
                 rd = inst[isa.Rs].value.rd
                 rs = inst[isa.Rs].value.rs
@@ -141,7 +141,7 @@ def MIPS32_fc(family):
                     alu_op = ALUOp(micro.ALUOp.SHL)
                 else:
                     alu_op = ALUOp(micro.ALUOp.ROT)
-                alu_ctrl = ALUControl(signed=signed, alu_op=alu_op, inv_lu_out=Bit(0))
+                alu_ctrl = ALUControl(signed=Bit(signed), alu_op=alu_op, inv_lu_out=Bit(0))
             elif inst[isa.Rlm].match:
                 rd = inst[isa.Rlm].value.rd
                 rs = inst[isa.Rlm].value.rs
@@ -160,10 +160,10 @@ def MIPS32_fc(family):
                 elif inst[isa.I2].value.op == isa.I2Inst.ORI:
                     alu_op = ALUOp(micro.ALUOp.OR)
                 elif inst[isa.I2].value.op == isa.I2Inst.XORI:
-                    alu_op = ALUOp(micro.ALUOp.XORI)
+                    alu_op = ALUOp(micro.ALUOp.XOR)
                 else:
                     alu_op = ALUOp(micro.ALUOp.LT)
-                alu_ctrl = ALUControl(signed=signed, alu_op=alu_op, inv_lu_out=Bit(0))
+                alu_ctrl = ALUControl(signed=Bit(signed), alu_op=alu_op, inv_lu_out=Bit(0))
 
             else:
                 assert inst[isa.LUI].match
@@ -197,8 +197,11 @@ def MIPS32_fc(family):
                 acc_out = acc + cl.concat(ch)
             elif sub_acc:
                 acc_out = acc - cl.concat(ch)
+            else:
+                acc_out = acc
 
             self.register_file.store(rd, cl)
+            return acc_out
 
 
     @family.assemble(locals(), globals())
@@ -214,9 +217,9 @@ def MIPS32_fc(family):
                 ) -> (Word, Word):
             if inst.alu_op == micro.ALUOp.AND:
                 lu_out = a & b
-            elif inst.alu_op == micro.ALUOp.Or:
+            elif inst.alu_op == micro.ALUOp.OR:
                 lu_out = a | b
-            elif inst.alu_op == micro.ALUOp.XOr:
+            elif inst.alu_op == micro.ALUOp.XOR:
                 lu_out = a ^ b
             elif inst.alu_op == micro.ALUOp.MOV:
                 lu_out = b.bvcomp(0).sext(31)

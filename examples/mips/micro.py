@@ -13,13 +13,6 @@ from . import isa as isa_
 def Micro_fc(family):
     isa = isa_.ISA_fc(family)
 
-
-
-    class ShifterControl(Product):
-        a = isa.Word
-        b = isa.Shift
-        inst = isa.RsInst
-
     class ALUOp(Enum):
         AND = Enum.Auto()
         OR = Enum.Auto()
