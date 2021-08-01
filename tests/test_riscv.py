@@ -5,15 +5,14 @@ import random
 
 import pytest
 
-from examples.riscv import sim as sim_mod_base
-from examples.riscv import isa as isa_mod_base
 from examples.riscv import family as family_base
-from examples.riscv_ext import sim as sim_mod_ext, isa as isa_mod_ext
-from examples.riscv_m import sim as sim_mod_m, isa as isa_mod_m
-from examples.riscv import asm
-from examples.riscv_ext import asm as asm_ext
-from examples.riscv_m import asm as asm_m
+from examples.riscv import sim as sim_mod_base, isa as isa_mod_base, asm as asm_base
+from examples.riscv_ext import sim as sim_mod_ext, isa as isa_mod_ext, asm as asm_ext
+from examples.riscv_m import sim as sim_mod_m, isa as isa_mod_m, asm as asm_m
+from examples.riscv_f import sim as sim_mod_f, isa as isa_mod_f, asm as asm_f
+
 from peak.mapper.utils import rebind_type
+from peak.mapper import create_and_set_bb_outputs
 
 
 NTESTS = 16
@@ -33,9 +32,10 @@ GOLD = {
 
 
 
-@pytest.mark.parametrize('fcs', [(sim_mod_base, isa_mod_base, asm),
+@pytest.mark.parametrize('fcs', [(sim_mod_base, isa_mod_base, asm_base),
                                  (sim_mod_ext, isa_mod_ext, asm_ext),
-                                 (sim_mod_m, isa_mod_m, asm_m)
+                                 (sim_mod_m, isa_mod_m, asm_m),
+                                 (sim_mod_f, isa_mod_f, asm_f),
                                  ])
 @pytest.mark.parametrize('op_name',
         ('ADD', 'SUB', 'SLT', 'SLTU', 'AND', 'OR', 'XOR', 'SLL', 'SRL', 'SRA',)
@@ -70,9 +70,9 @@ def test_riscv(fcs, op_name, use_imm):
         assert GOLD[op_name](a, b) == riscv.register_file.load1(rd)
 
 
-@pytest.mark.parametrize('fcs', [(sim_mod_base, isa_mod_base, asm),
+@pytest.mark.parametrize('fcs', [(sim_mod_base, isa_mod_base, asm_base),
                                  (sim_mod_ext, isa_mod_ext, asm_ext),
-                                 (sim_mod_m, isa_mod_m, asm_m)
+                                 (sim_mod_m, isa_mod_m, asm_m),
                                  ])
 def test_riscv_smt(fcs):
     sim_mod = fcs[0]
@@ -128,6 +128,65 @@ def test_riscv_smt(fcs):
     assert rd_next.value != (rs1_v - rs2_v).value
     assert rd_next.value == rd_init.value
 
+def test_riscv_f_smt():
+    sim_mod = sim_mod_f
+    isa_mod = isa_mod_f
+    asm_mod = asm_f
+    fam = isa_mod.family.SMTFamily()
+    R32I = sim_mod.R32I_mappable_fc(fam)
+    isa = isa_mod.ISA_fc.Py
+
+    AsmInst = fam.get_adt_t(isa.Inst)
+
+    riscv = R32I()
+    create_and_set_bb_outputs(riscv, isa_mod.family)
+
+    rs1_v = fam.Word(name='rs1')
+    rs2_v = fam.Word(name='rs2')
+    rd_init = fam.Word(name='rd_init')
+    pc = fam.Word(name='pc')
+
+    rs1_f_v = fam.Word(name='rs1_f')
+    rs2_f_v = fam.Word(name='rs2_f')
+    rs3_f_v = fam.Word(name='rs3_f')
+    rd_f_init = fam.Word(name='rd_f_init')
+
+    r0 = isa.Idx(0)
+    rs1 = isa.Idx(1)
+    rs2 = isa.Idx(2)
+    rd  = isa.Idx(3)
+
+    data  = isa.R(rd=rd, rs1=rs1, rs2=rs2)
+    tag = isa.AluInst(arith=isa.ArithInst.SUB)
+    op = isa.OP(data=data, tag=tag)
+    inst = isa.Inst(op)
+
+    asm_inst = AsmInst(inst)
+
+    pc_next, rd_next, rd_f_next = riscv(asm_inst, pc, rs1_v, rs2_v, rd_init, rs1_f_v, rs2_f_v, rs3_f_v, rd_f_init)
+
+    # Recall pysmt == is structural equiv
+    assert pc_next.value == (pc.value + 4)
+    assert rd_next.value == (rs1_v.value - rs2_v.value)
+    assert rd_next.value == (rs1_v - rs2_v).value
+    assert rd_next.value != rd_init.value
+
+
+    # setting rd=r0 makes this a nop
+    data  = isa.R(rd=r0, rs1=rs1, rs2=rs2)
+    tag = isa.AluInst(arith=isa.ArithInst.SUB)
+    op = isa.OP(data=data, tag=tag)
+    inst = isa.Inst(op)
+
+    asm_inst = AsmInst(inst)
+
+    pc_next, rd_next, rd_f_next = riscv(asm_inst, pc, rs1_v, rs2_v, rd_init, rs1_f_v, rs2_f_v, rs3_f_v, rd_f_init)
+
+    assert pc_next.value == (pc.value + 4)
+    assert rd_next.value != (rs1_v.value - rs2_v.value)
+    assert rd_next.value != (rs1_v - rs2_v).value
+    assert rd_next.value == rd_init.value
+
 
 @pytest.mark.parametrize('op_name',
         ('ADD', 'SUB', 'SLT', 'SLTU', 'AND', 'OR', 'XOR', 'SLL', 'SRL', 'SRA',)
@@ -139,7 +198,7 @@ def test_get_set_fields(op_name, use_imm):
         return
 
     isa = isa_mod_base.ISA_fc.Py
-    asm_f = getattr(asm, f'asm_{op_name}')
+    asm_f = getattr(asm_base, f'asm_{op_name}')
 
     # because I need a do while loop
     inst1 = 0
@@ -166,12 +225,12 @@ def test_get_set_fields(op_name, use_imm):
         inst1 = asm_f(**kwargs1)
         inst2 = asm_f(**kwargs2)
         assert  (inst1 == inst2) == (kwargs1 == kwargs2)
-        assert asm.get_fields(inst1) == kwargs1
-        assert asm.get_fields(inst2) == kwargs2
+        assert asm_base.get_fields(inst1) == kwargs1
+        assert asm_base.get_fields(inst2) == kwargs2
 
     assert inst1 != inst2
-    assert asm.set_fields(inst1, **kwargs2) == inst2
-    assert asm.set_fields(inst2, **kwargs1) == inst1
+    assert asm_base.set_fields(inst1, **kwargs2) == inst2
+    assert asm_base.set_fields(inst2, **kwargs1) == inst1
 
 def test_rebind():
     isa = isa_mod_base.ISA_fc.Py
