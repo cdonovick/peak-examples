@@ -352,9 +352,9 @@ def R32I_fc(family):
             div_out = self.fp_div(rm, div_in_0, div_in_1)
             min_out = self.fp_min(rm, min_in_0, min_in_1)
             max_out = self.fp_max(rm, max_in_0, max_in_1)
-            eq_out = self.fp_eq(rm, eq_in_0, eq_in_1)
-            lt_out = self.fp_lt(rm, lt_in_0, lt_in_1)
-            le_out = self.fp_leq(rm, le_in_0, le_in_1)
+            eq_out = Word(self.fp_eq(rm, eq_in_0, eq_in_1))
+            lt_out = Word(self.fp_lt(rm, lt_in_0, lt_in_1))
+            le_out = Word(self.fp_leq(rm, le_in_0, le_in_1))
             fma_out = self.fp_fma(rm, fma_in_0, fma_in_1, fma_in_2)
             sqrt_out = self.fp_sqrt(rm, sqrt_in)
 
