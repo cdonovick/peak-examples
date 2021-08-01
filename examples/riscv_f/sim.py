@@ -334,10 +334,10 @@ def R32I_fc(family):
                 fma_in_1 = b
                 fma_in_2 = c
                 if (inst.fused.value == isa.FPFusedInst.FNMA) or (inst.fused.value == isa.FPFusedInst.FNMS):
-                    fma_in_0 = self.fp_neg_1(fma_in_0)
+                    fma_in_0 = self.fp_neg_1(rm, fma_in_0)
 
                 if (inst.fused.value == isa.FPFusedInst.FMS) or (inst.fused.value == isa.FPFusedInst.FNMS):
-                    fma_in_2 = self.fp_neg_2(fma_in_2)
+                    fma_in_2 = self.fp_neg_2(rm, fma_in_2)
             else:
                 assert inst.other.match
                 if inst.other.value == isa.FPOther.FSQRT:
