@@ -129,7 +129,7 @@ def MIPS32_fc(family):
                 else:
                     alu_op = ALUOp(micro.ALUOp.MOV)
                     is_mov = Bit(1)
-                alu_ctrl = ALUControl(signed=Bit(signed), alu_op=alu_op, inv_lu_out=inv_lu_out)
+                alu_ctrl = ALUControl(signed=Bit(signed), alu_op=alu_op, inv_lu_out=Bit(inv_lu_out))
             elif inst[isa.Rs].match:
                 rd = inst[isa.Rs].value.rd
                 rs = inst[isa.Rs].value.rs
