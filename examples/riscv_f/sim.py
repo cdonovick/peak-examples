@@ -346,6 +346,9 @@ def R32I_fc(family):
                     assert inst.other.value == isa.FPOther.FCLASS
                     # Not Implemented
 
+            #HACK
+            rm = RoundingMode.RNE
+
             add_out = self.fp_add(rm, add_in_0, add_in_1)
             sub_out = self.fp_sub(rm, sub_in_0, sub_in_1)
             mul_out = self.fp_mul(rm, mul_in_0, mul_in_1)
