@@ -42,3 +42,24 @@ for inst_name, suffix in (
         )
 
     exec(f_str)
+
+
+def asm_CLO(rd, rs, rt=None, im=None):
+    if rt is not None or im is not None:
+        raise ValueError('Must not specify either rt or imm')
+
+    rd = isa.Idx(rd)
+    rs = isa.Idx(rs)
+    op = isa.R2Inst.CLO
+    inst = isa.R2(rd, rs, op)
+    return isa.Inst(inst)
+
+def asm_CLZ(rd, rs, rt=None, im=None):
+    if rt is not None or im is not None:
+        raise ValueError('Must not specify either rt or imm')
+
+    rd = isa.Idx(rd)
+    rs = isa.Idx(rs)
+    op = isa.R2Inst.CLZ
+    inst = isa.R2(rd, rs, op)
+    return isa.Inst(inst)

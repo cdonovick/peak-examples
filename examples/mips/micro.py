@@ -29,6 +29,8 @@ def Micro_fc(family):
         SHR = Enum.Auto()
         ROT = Enum.Auto()
         MOV = Enum.Auto()
+        # Same for the bit twiddling ops
+        CLO = Enum.Auto()
 
     class ALUControl(Product):
         signed = isa.Bit

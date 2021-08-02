@@ -4,7 +4,7 @@ from peak import Peak, name_outputs, family_closure, Const
 
 
 from .isa import ISA_fc
-from .util import Initial
+from .util import Initial, clo
 from . import family
 from .micro import Micro_fc
 
@@ -94,15 +94,20 @@ def MIPS32_fc(family):
                 _r2_op = inst[isa.R2].value.op
                 signed = _enum_in(_r2_op, (isa.R2Inst.DIV, isa.R2Inst.MADD, isa.R2Inst.MSUB, isa.R2Inst.MULT))
                 _unsigned = _enum_in(_r2_op, (isa.R2Inst.DIVU, isa.R2Inst.MADDU, isa.R2Inst.MSUBU, isa.R2Inst.MULTU))
+                inv_lu_out = _r2_op == isa.R2Inst.CLZ
 
                 if _enum_in(_r2_op, (isa.R2Inst.DIV, isa.R2Inst.DIVU)):
                     alu_op = ALUOp(micro.ALUOp.DIV)
                 elif signed | _unsigned:
                     alu_op = ALUOp(micro.ALUOp.MUL)
+                elif _enum_in(_r2_op, (isa.R2Inst.CLO, isa.R2Inst.CLZ)):
+                    alu_op = ALUOp(micro.ALUOp.CLO)
                 else:
-                    alu_op = ALUOp(micro.ALUOp.OR)
-                    # Need to handle CLO, CLZ, SEB, SEH, WSBH
-                alu_ctrl = ALUControl(signed=Bit(signed), alu_op=alu_op, inv_lu_out=Bit(0))
+                    # Need to handle SEB, SEH, WSBH
+                    alu_op  = ALUOp(micro.ALUOp.OR)
+                    rd = Idx(0)
+                    rs = Idx(0)
+                alu_ctrl = ALUControl(signed=Bit(signed), alu_op=alu_op, inv_lu_out=Bit(inv_lu_out))
             elif inst[isa.R3].match:
                 rd = inst[isa.R3].value.rd
                 rs = inst[isa.R3].value.rs
@@ -223,6 +228,8 @@ def MIPS32_fc(family):
                 lu_out = a ^ b
             elif inst.alu_op == micro.ALUOp.MOV:
                 lu_out = b.bvcomp(0).sext(31)
+            elif inst.alu_op == micro.ALUOp.CLO:
+                lu_out = a
             else:
                 lu_out = b
 
@@ -268,6 +275,8 @@ def MIPS32_fc(family):
             elif inst.alu_op == micro.ALUOp.ROT:
                 _sb =  Word(32) - sa
                 cl = a.bvlshr(sa) | a.bvshl(_sb)
+            elif inst.alu_op == micro.ALUOp.CLO:
+                cl = clo(lu_out)
             else:
                 cl = lu_out
 
