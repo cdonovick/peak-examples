@@ -5,6 +5,8 @@ import random
 
 import pytest
 
+from peak.mapper import ArchMapper, RewriteRule
+
 from examples.mips import sim, isa as isa_, family, asm
 
 
@@ -51,3 +53,8 @@ def test_mips(op_name, use_imm):
         acc_next = mips_py(inst, acc)
         assert GOLD[op_name](a, b) == mips_py.register_file.load1(rd)
         assert acc == acc_next
+
+
+def test_mips_smt():
+    arch_fc = sim.MIPS32_mappable_fc
+    arch_mapper = ArchMapper(arch_fc, family=family)

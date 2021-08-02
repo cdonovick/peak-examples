@@ -100,7 +100,7 @@ def MIPS32_fc(family):
                 elif signed | _unsigned:
                     alu_op = ALUOp(micro.ALUOp.MUL)
                 else:
-                    alu_op = ALUOp(micro.ALUOp.Or)
+                    alu_op = ALUOp(micro.ALUOp.OR)
                     # Need to handle CLO, CLZ, SEB, SEH, WSBH
                 alu_ctrl = ALUControl(signed=Bit(signed), alu_op=alu_op, inv_lu_out=Bit(0))
             elif inst[isa.R3].match:
@@ -135,9 +135,9 @@ def MIPS32_fc(family):
                 rs = inst[isa.Rs].value.rs
                 b = inst[isa.Rs].value.sa.zext(27)
                 signed = inst[isa.Rs].value.op == isa.RsInst.SRA
-                if signed or (inst[isa.Rs].value.op == isa.SRL):
+                if signed or (inst[isa.Rs].value.op == isa.RsInst.SRL):
                     alu_op = ALUOp(micro.ALUOp.SHR)
-                elif inst[isa.Rs].value.op == isa.SLL:
+                elif inst[isa.Rs].value.op == isa.RsInst.SLL:
                     alu_op = ALUOp(micro.ALUOp.SHL)
                 else:
                     alu_op = ALUOp(micro.ALUOp.ROT)
@@ -228,7 +228,7 @@ def MIPS32_fc(family):
 
             if inst.inv_lu_out:
                 lu_out = ~lu_out
-                if inst.au_op == micro.ALUOp.Add:
+                if inst.alu_op == micro.ALUOp.ADD:
                     lu_out = lu_out + 1
 
             if inst.signed:
@@ -261,14 +261,18 @@ def MIPS32_fc(family):
             elif inst.alu_op == micro.ALUOp.SHL:
                 cl = a << sa
             elif inst.alu_op == micro.ALUOp.SHR:
-                cl = a >> sa
+                if inst.signed:
+                    cl = a.bvashr(sa)
+                else:
+                    cl = a.bvlshr(sa)
             elif inst.alu_op == micro.ALUOp.ROT:
-                cl = a.bvror(sa)
+                _sb =  Word(32) - sa
+                cl = a.bvlshr(sa) | a.bvshl(_sb)
             else:
                 cl = lu_out
 
             return cl, ch
-    return MIPS32 
+    return MIPS32
 
 
 @family_closure(family)
