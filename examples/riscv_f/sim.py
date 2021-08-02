@@ -262,8 +262,8 @@ def R32I_fc(family):
             self.fp_neg_1 = float_fcs.Neg_fc(family)()
             self.fp_neg_2 = float_fcs.Neg_fc(family)()
             self.fp_eq = float_fcs.Eq_fc(family)()
+            self.fp_leq = float_fcs.Leq_fc(family)()
             self.fp_lt = float_fcs.Lt_fc(family)()
-            self.fp_le = float_fcs.Lte_fc(family)()
 
 
         def __call__(self,
@@ -334,10 +334,10 @@ def R32I_fc(family):
                 fma_in_1 = b
                 fma_in_2 = c
                 if (inst.fused.value == isa.FPFusedInst.FNMA) or (inst.fused.value == isa.FPFusedInst.FNMS):
-                    fma_in_0 = self.fp_neg_1(fma_in_0)
+                    fma_in_0 = self.fp_neg_1(rm, fma_in_0)
 
                 if (inst.fused.value == isa.FPFusedInst.FMS) or (inst.fused.value == isa.FPFusedInst.FNMS):
-                    fma_in_2 = self.fp_neg_2(fma_in_2)
+                    fma_in_2 = self.fp_neg_2(rm, fma_in_2)
             else:
                 assert inst.other.match
                 if inst.other.value == isa.FPOther.FSQRT:
@@ -345,16 +345,19 @@ def R32I_fc(family):
                 else:
                     assert inst.other.value == isa.FPOther.FCLASS
                     # Not Implemented
-            
+
+            #HACK
+            rm = RoundingMode.RNE
+
             add_out = self.fp_add(rm, add_in_0, add_in_1)
             sub_out = self.fp_sub(rm, sub_in_0, sub_in_1)
             mul_out = self.fp_mul(rm, mul_in_0, mul_in_1)
             div_out = self.fp_div(rm, div_in_0, div_in_1)
-            min_out = self.fp_min(min_in_0, min_in_1)
-            max_out = self.fp_max(max_in_0, max_in_1)
-            eq_out = self.fp_eq(eq_in_0, eq_in_1)
-            lt_out = self.fp_lt(lt_in_0, lt_in_1)
-            le_out = self.fp_le(le_in_0, le_in_1)
+            min_out = self.fp_min(rm, min_in_0, min_in_1)
+            max_out = self.fp_max(rm, max_in_0, max_in_1)
+            eq_out = Word(self.fp_eq(rm, eq_in_0, eq_in_1))
+            lt_out = Word(self.fp_lt(rm, lt_in_0, lt_in_1))
+            le_out = Word(self.fp_leq(rm, le_in_0, le_in_1))
             fma_out = self.fp_fma(rm, fma_in_0, fma_in_1, fma_in_2)
             sqrt_out = self.fp_sqrt(rm, sqrt_in)
 
