@@ -131,6 +131,8 @@ def MIPS32_fc(family):
                     alu_op = ALUOp(micro.ALUOp.SHL)
                 elif _r3_op == isa.R3Inst.ROTRV:
                     alu_op = ALUOp(micro.ALUOp.ROT)
+                elif _r3_op == isa.R3Inst.MUL:
+                    alu_op = ALUOp(micro.ALUOp.MUL)
                 else:
                     alu_op = ALUOp(micro.ALUOp.MOV)
                     is_mov = Bit(1)
@@ -153,6 +155,8 @@ def MIPS32_fc(family):
                 s5 = inst[isa.Rlm].value.mb
                 t5 = inst[isa.Rlm].value.lb
                 # Need to handle EXT / INS
+                rd = Idx(0)
+                rs = Idx(0)
             elif inst[isa.I2].match:
                 rd = inst[isa.I2].value.rd
                 rs = inst[isa.I2].value.rs

@@ -22,12 +22,17 @@ GOLD = {
         'XOR': operator.xor,
         'SLT': lambda a, b: type(a)(a.bvslt(b)),
         'SLTU': lambda a, b: type(a)(a.bvult(b)),
+        'MUL': operator.mul,
+        'SUBU': operator.sub,
 }
 
+R_ONLY = {'MUL', 'SUBU', }
 
 @pytest.mark.parametrize('op_name', GOLD.keys())
 @pytest.mark.parametrize('use_imm', (False, True))
 def test_mips(op_name, use_imm):
+    if use_imm and op_name in R_ONLY:
+        return
     MIPS_py = sim.MIPS32_fc.Py
     isa = isa_.ISA_fc.Py
 
