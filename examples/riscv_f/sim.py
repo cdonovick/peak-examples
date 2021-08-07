@@ -27,6 +27,7 @@ def R32I_fc(family):
     DecodeOut = family.get_constructor(isa._DecodeOut)
     RM = family.get_constructor(isa.RM)
 
+    RoundingMode_c = family.get_constructor(RoundingMode)
     @family.assemble(locals(), globals())
     class Decode(Peak):
         def __call__(self,
@@ -296,6 +297,9 @@ def R32I_fc(family):
             le_in_1 = Word(0)
             sqrt_in = Word(0)
 
+            #HACK
+            rm = RoundingMode_c(RoundingMode.RNE)
+
             if inst.compute.match:
                 if inst.compute.value == isa.FPComputeInst.FADD:
                     add_in_0 = a
@@ -346,8 +350,7 @@ def R32I_fc(family):
                     assert inst.other.value == isa.FPOther.FCLASS
                     # Not Implemented
 
-            #HACK
-            rm = RoundingMode.RNE
+
 
             add_out = self.fp_add(rm, add_in_0, add_in_1)
             sub_out = self.fp_sub(rm, sub_in_0, sub_in_1)
