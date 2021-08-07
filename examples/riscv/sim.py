@@ -302,3 +302,41 @@ def R32I_mappable_fc(family):
 
     return R32I_mappable
 
+
+@family_closure(family)
+def R32I_mappable_no_pc_fc(family):
+    R32I = R32I_fc(family)
+    Word = family.Word
+    isa = ISA_fc.Py
+
+
+    @family.assemble(locals(), globals())
+    class R32I_mappable(Peak):
+        def __init__(self):
+            self.riscv = R32I()
+
+        @name_outputs(rd=isa.Word)
+        def __call__(self,
+                     inst: Const(isa.Inst),
+                     rs1: isa.Word,
+                     rs2: isa.Word,
+                     ) -> isa.Word:
+
+            pc = Word(0)
+            rd = Word(0x5555)
+            self._set_rs1_(rs1)
+            self._set_rs2_(rs2)
+            self._set_rd_(rd)
+            pc_next = self.riscv(inst, pc)
+            return self.riscv.register_file.rd
+
+        def _set_rs1_(self, rs1):
+            self.riscv.register_file._set_rs1_(rs1)
+
+        def _set_rs2_(self, rs2):
+            self.riscv.register_file._set_rs2_(rs2)
+
+        def _set_rd_(self, rd):
+            self.riscv.register_file._set_rd_(rd)
+
+    return R32I_mappable
