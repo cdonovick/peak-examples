@@ -77,7 +77,10 @@ def MIPS32_fc(family):
                     rd = inst[isa.R1].value.rd
 
                 _read   = ~_write
-                _use_lo = inst[isa.R1].value.op.reg == isa.LOHI.LO
+                if inst[isa.R1].value.op.reg == isa.LOHI.LO:
+                    _use_lo = Bit(1)
+                else:
+                    _use_lo = Bit(0)
                 _use_hi = ~_use_lo
 
                 if _read & _use_hi:

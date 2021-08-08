@@ -34,6 +34,47 @@ def test_mips_div():
         acc_next = mips_py(inst, acc)
         assert acc_next[:32] == (a.bvsdiv(b)), (a, b)
 
+def test_acc_access():
+    MIPS_py = sim.MIPS32_fc.Py
+    isa = isa_.ISA_fc.Py
+
+    mips_py = MIPS_py()
+    for i in range(1, 32):
+        mips_py.register_file.store(isa.Idx(i), isa.Word(i))
+
+    for _ in range(NTESTS):
+        acc = isa.BitVector[64](random.randrange(0, 1 << isa.Word.size*2))
+        rd = isa.Idx(random.randrange(1, 1 << isa.Idx.size))
+        inst = isa.Inst(isa.R1(rd=rd, op=isa.R1Inst(dir=isa.TF.F, reg=isa.LOHI.LO)))
+        acc_next = mips_py(inst, acc)
+        assert acc[:32] == mips_py.register_file.load1(rd)
+
+
+def test_mips_div2():
+    MIPS_py = sim.MIPS32_fc.Py
+    isa = isa_.ISA_fc.Py
+
+    mips_py = MIPS_py()
+    for i in range(1, 32):
+        mips_py.register_file.store(isa.Idx(i), isa.Word(i))
+
+
+    asm_f = asm.asm_DIV
+    for _ in range(NTESTS):
+        rs = isa.Idx(random.randrange(1, 1 << isa.Idx.size))
+        rt = isa.Idx(random.randrange(1, 1 << isa.Idx.size))
+        inst = asm_f(rd=rs, rs=rt)
+        a = mips_py.register_file.load1(rs)
+        b = mips_py.register_file.load2(rt)
+        acc = isa.BitVector[64](random.randrange(0, 1 << isa.Word.size*2))
+        acc_next = mips_py(inst, acc)
+        assert acc_next[:32] == (a.bvsdiv(b)), (a, b)
+        acc = acc_next
+        rd = isa.Idx(random.randrange(1, 1 << isa.Idx.size))
+        inst = isa.Inst(isa.R1(rd=rd, op=isa.R1Inst(dir=isa.TF.F, reg=isa.LOHI.LO)))
+        acc_next = mips_py(inst, acc)
+        assert acc[:32] == mips_py.register_file.load1(rd)
+        assert a.bvsdiv(b) == mips_py.register_file.load1(rd)
 
 GOLD = {
         'ADDU': operator.add,
