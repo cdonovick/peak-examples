@@ -32,9 +32,7 @@ def test_mips_div():
         b = mips_py.register_file.load2(rs)
         acc = isa.BitVector[64](random.randrange(0, 1 << isa.Word.size*2))
         acc_next = mips_py(inst, acc)
-        print(acc_next)
-        print(acc_next[:32])
-        assert acc_next[:32] == (b.bvsdiv(a)), (a, b)
+        assert acc_next[:32] == (a.bvsdiv(b)), (a, b)
 
 
 GOLD = {

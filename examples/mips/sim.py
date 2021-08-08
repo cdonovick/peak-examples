@@ -97,15 +97,15 @@ def MIPS32_fc(family):
                 inv_lu_out = _r2_op == isa.R2Inst.CLZ
 
                 if _enum_in(_r2_op, (isa.R2Inst.DIV, isa.R2Inst.DIVU)):
-                    rs = rt
-                    rt = rd
+                    rt = rs
+                    rs = rd
                     rd = Idx(0)
                     write_hi = Bit(1)
                     write_lo = Bit(1)
                     alu_op = ALUOp(micro.ALUOp.DIV)
                 elif _enum_in(_r2_op, (isa.R2Inst.MULT, isa.R2Inst.MULTU)):
-                    rs = rt
-                    rt = rd
+                    rt = rs
+                    rs = rd
                     rd = Idx(0)
                     write_hi = Bit(1)
                     write_lo = Bit(1)
@@ -201,7 +201,6 @@ def MIPS32_fc(family):
 
             b = b | i32
 
-            print(a, b)
             cl, ch = self.alu(alu_ctrl, a, b)
             if is_mov and cl[0]:
                 cl = a
@@ -223,7 +222,6 @@ def MIPS32_fc(family):
 
             self.register_file.store(rd, cl)
 
-            print(acc_out)
             return acc_out
 
 
