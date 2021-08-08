@@ -341,6 +341,7 @@ def MIPS32_mappable_fc(family):
 
     return MIPS32_mappable
 
+from peak.mapper.multi import State
 
 @family_closure(family)
 def MIPS32_mappable_no_rd_fc(family):
@@ -354,13 +355,13 @@ def MIPS32_mappable_no_rd_fc(family):
         def __init__(self):
             self.riscv = MIPS32()
 
-        @name_outputs(rd=isa.Word, acc_out=isa.BitVector[64])
+        @name_outputs(rd=isa.Word, acc_out=State(isa.BitVector[64]))
         def __call__(self,
                      inst: Const(isa.Inst),
                      rs1: isa.Word,
                      rs2: isa.Word,
-                     acc: isa.BitVector[64],
-                     ) -> (isa.Word, isa.BitVector[64]):
+                     acc: State(isa.BitVector[64]),
+                     ) -> (isa.Word, State(isa.BitVector[64])):
 
             rd = Word(0x5555)
             self._set_rs1_(rs1)
