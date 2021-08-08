@@ -298,7 +298,19 @@ def R32I_fc(family):
             sqrt_in = Word(0)
 
             #HACK
-            rm = RoundingMode_c(RoundingMode.RNE)
+            if rm == isa.RM.RNE:
+                rm = RoundingMode_c(RoundingMode.RNE)
+            elif rm == isa.RM.RTZ:
+                rm = RoundingMode_c(RoundingMode.RTZ)
+            elif rm == isa.RM.RDN:
+                rm = RoundingMode_c(RoundingMode.RDN)
+            elif rm == isa.RM.RUP:
+                rm = RoundingMode_c(RoundingMode.RUP)
+            elif rm == isa.RM.RMM:
+                rm = RoundingMode_c(RoundingMode.RMM)
+            else:
+                assert rm == isa.RM.DYN
+                return Word(0)
 
             if inst.compute.match:
                 if inst.compute.value == isa.FPComputeInst.FADD:
