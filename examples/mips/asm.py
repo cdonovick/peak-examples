@@ -61,23 +61,16 @@ for inst_name in isa.R3Inst._field_table_:
     f_str = ASM_TEMPLATE_R.format(INST_NAME=inst_name)
     exec(f_str)
 
-
-def asm_CLO(rd, rs, rt=None, im=None):
-    if rt is not None or im is not None:
-        raise ValueError('Must not specify either rt or imm')
-
+ASM_TEMPLATE_R2 = '''\
+def asm_{INST_NAME}(rd, rs):
     rd = isa.Idx(rd)
     rs = isa.Idx(rs)
-    op = isa.R2Inst.CLO
+    op = isa.R2Inst.{INST_NAME}
     inst = isa.R2(rd, rs, op)
     return isa.Inst(inst)
+'''
 
-def asm_CLZ(rd, rs, rt=None, im=None):
-    if rt is not None or im is not None:
-        raise ValueError('Must not specify either rt or imm')
+for inst_name in isa.R2Inst._field_table_:
 
-    rd = isa.Idx(rd)
-    rs = isa.Idx(rs)
-    op = isa.R2Inst.CLZ
-    inst = isa.R2(rd, rs, op)
-    return isa.Inst(inst)
+    f_str = ASM_TEMPLATE_R2.format(INST_NAME=inst_name)
+    exec(f_str)

@@ -14,6 +14,28 @@ from examples.mips.util import clo, clz
 
 NTESTS = 16
 
+def test_mips_div():
+    MIPS_py = sim.MIPS32_fc.Py
+    isa = isa_.ISA_fc.Py
+
+    mips_py = MIPS_py()
+    for i in range(1, 32):
+        mips_py.register_file.store(isa.Idx(i), isa.Word(i))
+
+
+    asm_f = asm.asm_DIV
+    for _ in range(NTESTS):
+        rd = isa.Idx(random.randrange(1, 1 << isa.Idx.size))
+        rs = isa.Idx(random.randrange(1, 1 << isa.Idx.size))
+        inst = asm_f(rd=rd, rs=rs)
+        a = mips_py.register_file.load1(rd)
+        b = mips_py.register_file.load2(rs)
+        acc = isa.BitVector[64](random.randrange(0, 1 << isa.Word.size*2))
+        acc_next = mips_py(inst, acc)
+        print(acc_next)
+        print(acc_next[:32])
+        assert acc_next[:32] == (b.bvsdiv(a)), (a, b)
+
 
 GOLD = {
         'ADDU': operator.add,
@@ -129,3 +151,4 @@ def test_mips_cl(op_name):
         acc_next = mips_py(inst, acc)
         assert GOLD_CL[op_name](a) == mips_py.register_file.load1(rd)
         assert acc == acc_next
+

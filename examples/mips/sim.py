@@ -97,8 +97,18 @@ def MIPS32_fc(family):
                 inv_lu_out = _r2_op == isa.R2Inst.CLZ
 
                 if _enum_in(_r2_op, (isa.R2Inst.DIV, isa.R2Inst.DIVU)):
+                    rs = rt
+                    rt = rd
+                    rd = Idx(0)
+                    write_hi = Bit(1)
+                    write_lo = Bit(1)
                     alu_op = ALUOp(micro.ALUOp.DIV)
-                elif signed | _unsigned:
+                elif _enum_in(_r2_op, (isa.R2Inst.MULT, isa.R2Inst.MULTU)):
+                    rs = rt
+                    rt = rd
+                    rd = Idx(0)
+                    write_hi = Bit(1)
+                    write_lo = Bit(1)
                     alu_op = ALUOp(micro.ALUOp.MUL)
                 elif _enum_in(_r2_op, (isa.R2Inst.CLO, isa.R2Inst.CLZ)):
                     alu_op = ALUOp(micro.ALUOp.CLO)
@@ -182,7 +192,6 @@ def MIPS32_fc(family):
 
             a_ = self.register_file.load1(rs)
             b_ = self.register_file.load2(rt)
-
             a = a | a_
             b = b | b_
             if signed:
@@ -192,13 +201,16 @@ def MIPS32_fc(family):
 
             b = b | i32
 
+            print(a, b)
             cl, ch = self.alu(alu_ctrl, a, b)
             if is_mov and cl[0]:
                 cl = a
             elif is_mov:
                 rd = Idx(0)
 
-            if write_lo:
+            if write_lo & write_hi:
+                acc_out = cl.concat(ch)
+            elif write_lo:
                 acc_out = cl.concat(acc[:32])
             elif write_hi:
                 acc_out = acc[32:].concat(ch)
@@ -210,6 +222,8 @@ def MIPS32_fc(family):
                 acc_out = acc
 
             self.register_file.store(rd, cl)
+
+            print(acc_out)
             return acc_out
 
 
