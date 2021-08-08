@@ -318,7 +318,7 @@ def MIPS32_mappable_fc(family):
                      rs1: isa.Word,
                      rs2: isa.Word,
                      rd: Initial(isa.Word),
-                     acc: Initial(isa.BitVector[64]),
+                     acc: isa.BitVector[64],
                      ) -> (isa.Word, isa.BitVector[64]):
 
             self._set_rs1_(rs1)
@@ -356,7 +356,7 @@ def MIPS32_mappable_no_rd_fc(family):
                      inst: Const(isa.Inst),
                      rs1: isa.Word,
                      rs2: isa.Word,
-                     acc: Initial(isa.BitVector[64]),
+                     acc: isa.BitVector[64],
                      ) -> (isa.Word, isa.BitVector[64]):
 
             rd = Word(0x5555)
