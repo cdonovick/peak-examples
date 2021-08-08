@@ -326,3 +326,41 @@ def MIPS32_mappable_fc(family):
 
     return MIPS32_mappable
 
+
+@family_closure(family)
+def MIPS32_mappable_no_rd_fc(family):
+    MIPS32 = MIPS32_fc(family)
+    Word = family.Word
+    isa = ISA_fc.Py
+
+
+    @family.assemble(locals(), globals())
+    class MIPS32_mappable(Peak):
+        def __init__(self):
+            self.riscv = MIPS32()
+
+        @name_outputs(rd=isa.Word, acc_out=isa.BitVector[64])
+        def __call__(self,
+                     inst: Const(isa.Inst),
+                     rs1: isa.Word,
+                     rs2: isa.Word,
+                     acc: Initial(isa.BitVector[64]),
+                     ) -> (isa.Word, isa.BitVector[64]):
+
+            rd = Word(0x5555)
+            self._set_rs1_(rs1)
+            self._set_rs2_(rs2)
+            self._set_rd_(rd)
+            acc_out = self.riscv(inst, acc)
+            return self.riscv.register_file.rd, acc_out
+
+        def _set_rs1_(self, rs1):
+            self.riscv.register_file._set_rs1_(rs1)
+
+        def _set_rs2_(self, rs2):
+            self.riscv.register_file._set_rs2_(rs2)
+
+        def _set_rd_(self, rd):
+            self.riscv.register_file._set_rd_(rd)
+
+    return MIPS32_mappable
