@@ -126,7 +126,7 @@ def ISA_fc(family):
     class RM(Enum):
         RNE = Enum.Auto()
         RTZ = Enum.Auto()
-        RDZ = Enum.Auto()
+        RDN = Enum.Auto()
         RUP = Enum.Auto()
         RMM = Enum.Auto()
         DYN = Enum.Auto()
