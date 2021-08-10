@@ -78,6 +78,7 @@ def R32I_fc(family):
                 imm = lui_inst.imm.sext(12) << 12
                 rd = lui_inst.rd
                 exec_inst = ExecInst(arith=isa.ArithInst.ADD)
+                use_imm = Bit(1)
 
             elif inst[isa.AUIPC].match:
                 auipc_inst = inst[isa.AUIPC].value.data
