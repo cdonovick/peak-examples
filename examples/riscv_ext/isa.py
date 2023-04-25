@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+import copy
 
 from hwtypes.adt import Enum, Product, TaggedUnion, Sum
 from hwtypes.adt_util import rebind_type
@@ -12,6 +13,7 @@ from ..riscv import isa
 @family_closure(family)
 def ISA_fc(family):
     ns = isa.ISA_fc(family)
+    ns = copy.deepcopy(ns)
 
     class E(Product):
         rd = ns.Idx

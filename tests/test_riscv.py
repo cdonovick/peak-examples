@@ -7,12 +7,23 @@ import pytest
 
 from examples.riscv import family as family_base
 from examples.riscv import sim as sim_mod_base, isa as isa_mod_base, asm as asm_base
+from examples.riscv.assembler import Assembler
+
+
 from examples.riscv_ext import sim as sim_mod_ext, isa as isa_mod_ext, asm as asm_ext
 from examples.riscv_m import sim as sim_mod_m, isa as isa_mod_m, asm as asm_m
 from examples.riscv_f import sim as sim_mod_f, isa as isa_mod_f, asm as asm_f
 
 from peak.mapper.utils import rebind_type
 from peak.mapper import create_and_set_bb_outputs
+
+def test_assembler():
+    isa = isa_mod_base.ISA_fc.Py
+    Inst = isa.Inst
+    asm = Assembler(Inst)
+    for inst in Inst.enumerate():
+        print(inst)
+        assert asm.assemble(inst).size == 32
 
 
 NTESTS = 16
@@ -280,7 +291,4 @@ def test_ext(op_name):
         pc_next = riscv(inst, pc)
         assert pc_next == pc + 4
         assert GOLD_EXT[op_name](a) == riscv.register_file.load1(rd)
-
-
-
 
