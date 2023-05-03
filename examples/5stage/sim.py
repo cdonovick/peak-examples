@@ -108,5 +108,6 @@ def Top(family):
     @family.assemble(locals(), globals())
     class Pipelined(Peak):
         def __init__(self):
-        
+            pass
 
+    return Exec
