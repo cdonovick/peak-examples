@@ -1,11 +1,12 @@
 from examples.five_stage.sim import Top, isa
 
 def test_five_stage():
-    isa = isa.Py
+    global isa
+    isa_py = isa.Py
 
-    Exec = Top.Py
+    Fetch = Top.Py
 
-    exec = Exec()
+    fetch = Fetch()
 
 #     def __call__(self,
 #                  # from control
@@ -24,20 +25,37 @@ def test_five_stage():
 
 
 
-    exec(
-        isa.BitVector[2](1),
-        isa.Bit(1),
-        isa.Bit(1),
+
+
+
+#     exec(
+#         isa_py.BitVector[2](1),
+#         isa_py.Bit(1),
+#         isa_py.Bit(1),
+#         
+#         isa_py.AddrT(1),
+#         isa_py.DataT(1),
+#         isa_py.DataT(1),
+#         isa_py.DataT(1),
+#         isa_py.IdxT(1),
+#         isa_py.IdxT(1),
+#     )
         
-        isa.AddrT(1),
-        isa.DataT(1),
-        isa.DataT(1),
-        isa.DataT(1),
-        isa.IdxT(1),
-        isa.IdxT(1),
-        isa.IdxT(1),
-    )
-        
+    result=fetch(
+        isa_py.AddrT(8),
+        isa_py.Bit(1),
+        )
+    print(result); 
+
+    result=fetch(
+        isa_py.AddrT(8),
+        isa_py.Bit(1),
+        )
+    print(result); 
+
+
+
+    assert 0
 
 #         # AddrT = DataT = BitVector[32]
 # 
@@ -46,27 +64,27 @@ def test_five_stage():
 #     Cpu = CPU()
 # 
 #     # @name_outputs(out=Word, pc_next=Word)
-#     a = isa.Word(0)
+#     a = isa_py.Word(0)
 #     b = ~a
 # 
-#     pc_init = isa.Word(0)
+#     pc_init = isa_py.Word(0)
 # 
-#     out, pc = cpu(isa.NOR, a, a, pc_init)
+#     out, pc = cpu(isa_py.NOR, a, a, pc_init)
 # 
 #     assert pc == pc_init + 4
-#     assert out == isa.Word(-1)
+#     assert out == isa_py.Word(-1)
 # 
-#     out, pc = cpu(isa.JMP, a, b, pc)
+#     out, pc = cpu(isa_py.JMP, a, b, pc)
 # 
 #     assert pc == b
 #     assert out == 0
 # 
-#     out, pc = cpu(isa.NOR, a, b, pc)
+#     out, pc = cpu(isa_py.NOR, a, b, pc)
 # 
 #     assert pc == b + 4
 #     assert out == 0
 # 
-#     out, pc = cpu(isa.JMP, a, b, pc)
+#     out, pc = cpu(isa_py.JMP, a, b, pc)
 # 
 #     assert pc == a
 #     assert out == 0
