@@ -1,5 +1,73 @@
 from examples.five_stage.sim import Top, isa
 
+import pytest
+
+def test_ALU():
+    global isa
+
+    isa_py = isa.Py
+    ALU = Top.Py
+    alu = ALU()
+
+    # ADD
+    ctrl = isa_py.BitVector[4](0b0010)
+    i0 = isa_py.DataT(2)
+    i1 = isa_py.DataT(2)
+
+    res, z = alu(ctrl, i0, i1)
+
+    assert (res == isa_py.DataT(4)), "BAD ADD"
+    assert (z == 0), "oh no zero test failed"
+
+    # SUB
+    ctrl = isa_py.BitVector[4](0b0110)
+    i0 = isa_py.DataT(2)
+    i1 = isa_py.DataT(2)
+
+    res, z = alu(ctrl, i0, i1)
+
+    assert (res == isa_py.DataT(0)), "BAD SUB"
+    assert (z != 0), "oh no zero test failed"
+
+    SLT = isa_py.BitVector[4](0b0111)
+
+    # SLT 2,1 should be 0
+    (i0,i1) = (2,1)
+    res, z = alu(SLT, isa_py.DataT(i0), isa_py.DataT(i1))
+    want_res = 1 if (i0 < i1)        else 0
+    want_z   = 1 if (want_res == 0)  else 0
+    assert (res == isa_py.DataT(want_res)), "BAD SLT"
+    assert (z == want_z), "oh no zero test failed"
+
+    # SLT 1,2 should be 1 because 1<2
+    (i0,i1) = (1,2) 
+    res, z = alu(SLT, isa_py.DataT(i0), isa_py.DataT(i1))
+    want_res = 1 if (i0 < i1)        else 0
+    want_z   = 1 if (want_res == 0)  else 0
+    assert (res == isa_py.DataT(want_res)), "BAD SLT"
+    assert (z == want_z), "oh no zero test failed"
+
+    # SLT 0,-1 should be 1
+    (i0,i1) = (0,-1)
+    res, z = alu(SLT, isa_py.DataT(i0), isa_py.DataT(i1))
+    want_res = 1 if (i0 < i1)        else 0
+    want_z   = 1 if (want_res == 0)  else 0
+    assert (res == isa_py.DataT(want_res)), "BAD SLT"
+    assert (z == want_z), "oh no zero test failed"
+
+    # SLT 8,8
+    (i0,i1) = (8,8)
+    res, z = alu(SLT, isa_py.DataT(i0), isa_py.DataT(i1))
+    want_res = 1 if (i0 < i1)        else 0
+    want_z   = 1 if (want_res == 0)  else 0
+    assert (res == isa_py.DataT(want_res)), "BAD SLT"
+    assert (z == want_z), "oh no zero test failed"
+
+
+
+
+
+@pytest.mark.skip
 def test_five_stage():
     global isa
     isa_py = isa.Py

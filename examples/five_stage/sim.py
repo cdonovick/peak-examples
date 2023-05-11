@@ -7,14 +7,15 @@ from peak import Peak, name_outputs, family_closure, Const
 # from .util import Initial
 from . import family
 
+WORDSIZE = 32
 
 @family_closure(family)
 def isa(family):
     Bit = family.Bit
     BitVector = family.BitVector
 
-    AddrT = DataT = BitVector[32]
-    InstT = BitVector[32]
+    AddrT = DataT = BitVector[WORDSIZE]
+    InstT = BitVector[WORDSIZE]
     IdxT  = BitVector[5]
 
     class FetchOut(ht.Product):
@@ -73,52 +74,67 @@ def Top(family):
 
     FetchOutBuilder = family.get_constructor(FetchOut)
 
-    AddrT = DataT = BitVector[32]
-    InstT = BitVector[32]
+    AddrT = DataT = BitVector[WORDSIZE]
+    InstT = BitVector[WORDSIZE]
     IdxT  = BitVector[5]
 
     
-    CtrlT = BitVector[5]
+    CtrlT = BitVector[4]
 
     @family.compile(locals(), globals())
     class ALU(Peak):
-        def __call__(self, ctrl: CtrlT, i0: DataT, i1: DataT) -> (DataT, Bit, Bit):
+
+        # MIPS encodings copied from final column in Fig. 4.47
+        #   0000 => AND
+        #   0001 =>  OR
+        #   0010 => ADD
+        #   0110 => SUB
+        #   0111 => SLT (res=1 if (a < b) else res=0)
+
+        def __call__(self, ctrl: CtrlT, i0: DataT, i1: DataT) -> (DataT, Bit):
+
+            # Unused (always 0) for MIPS, see above
             if ctrl[3]:
                 i0 = ~i0
 
+            # ctrl[2] == 1 means want to do (i0 - i1)
             if ctrl[2]:
                 i1 = ~i1
 
+            # Need two's complement of i1 to do (i0 - i1)
+            # i.e. will do (i0 + ~i1 + 1) if (ctrl[2] == 1)
             cin = ctrl[2]
-            s, cout = i0.adc(i1, cin)
-            sovf = (i0[-1] == i1[-1]) & (s[-1] != i0[-1])
+
+            # Calculates (i0+i1) if (ctrl[2]==0) else (i0-i1)
+            sum, cout = i0.adc(i1, cin)
 
             o = i0 | i1
             a = i0 & i1
 
-            if ctrl[4]:
-                ovf = sovf
-                set = s[-1:]
+            SIGNED=True
+            if SIGNED:
+                # Signed compare; sign bit of (a-b) tells whether a<b
+                slt_int = sum[-1]
             else:
-                ovf = cout
-                set = BV[1](~cout)
+                # Unsigned compare; carry-out of (a-b) tells whether a<b
+                slt_int = ~cout
 
-
-            slt = set.zext(WORD_SIZE-1)
+            # Want slt = 32'b1 if i0<i1 else 32'b0
+            slt = (BitVector[1](slt_int)).zext(WORDSIZE-1)
 
             if ctrl[1]:
                 if ctrl[0]:
-                    res = slt
+                    res = slt  # SLT (0x00000000 or 0x00000001)
                 else:
-                    res = s
+                    res = sum  # SUM (ADD OR SUB)
             else:
                 if ctrl[0]:
-                    res = o
+                    res = o    # OR
                 else:
-                    res = a
+                    res = a    # AND
 
-            z = res == 0
-            return res, ovf, z
+            z = (res == 0)
+            return res, z
 
 
     @family.assemble(locals(), globals())
@@ -190,5 +206,4 @@ def Top(family):
         def __init__(self):
             pass
 
-    # return Exec
-    return Fetch
+    return ALU
