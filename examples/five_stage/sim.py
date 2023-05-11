@@ -77,6 +77,49 @@ def Top(family):
     InstT = BitVector[32]
     IdxT  = BitVector[5]
 
+    
+    CtrlT = BitVector[5]
+
+    @family.compile(locals(), globals())
+    class ALU(Peak):
+        def __call__(self, ctrl: CtrlT, i0: DataT, i1: DataT) -> (DataT, Bit, Bit):
+            if ctrl[3]:
+                i0 = ~i0
+
+            if ctrl[2]:
+                i1 = ~i1
+
+            cin = ctrl[2]
+            s, cout = i0.adc(i1, cin)
+            sovf = (i0[-1] == i1[-1]) & (s[-1] != i0[-1])
+
+            o = i0 | i1
+            a = i0 & i1
+
+            if ctrl[4]:
+                ovf = sovf
+                set = s[-1:]
+            else:
+                ovf = cout
+                set = BV[1](~cout)
+
+
+            slt = set.zext(WORD_SIZE-1)
+
+            if ctrl[1]:
+                if ctrl[0]:
+                    res = slt
+                else:
+                    res = s
+            else:
+                if ctrl[0]:
+                    res = o
+                else:
+                    res = a
+
+            z = res == 0
+            return res, ovf, z
+
 
     @family.assemble(locals(), globals())
     class Fetch(Peak):
@@ -100,7 +143,6 @@ def Top(family):
             # Build the instruction memory
             # instruction = self.imem[current_pc]
             instruction = InstT(0)
-            
             # Signals headed for the IF/ID (Fetch/Decode) boundary (register)
             return FetchOutBuilder(inst=instruction, pc_inc=incremented_pc)
 
